@@ -9,6 +9,9 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import json
 from utils import predict_price, CATEGORICAL_FEATURES
 
 # ----- App setup -----
@@ -26,21 +29,25 @@ app.add_middleware(
 # ----- Load model at startup -----
 MODEL_PATH = os.path.join(os.path.dirname(__file__), "model.pkl")
 FEATURES_PATH = os.path.join(os.path.dirname(__file__), "features.pkl")
+OPTIONS_PATH = os.path.join(os.path.dirname(__file__), "options.json")
 
 model = None
 features = None
-
+options_data = {}
 
 @app.on_event("startup")
 def load_model():
-    global model, features
+    global model, features, options_data
     if not os.path.exists(MODEL_PATH):
         print(f"WARNING: Model file not found at {MODEL_PATH}. Run train.py first.")
         return
     model = joblib.load(MODEL_PATH)
     if os.path.exists(FEATURES_PATH):
         features = joblib.load(FEATURES_PATH)
-    print("Model loaded successfully.")
+    if os.path.exists(OPTIONS_PATH):
+        with open(OPTIONS_PATH, "r") as f:
+            options_data = json.load(f)
+    print("Model and options loaded successfully.")
 
 
 # ----- Request / Response schemas -----
@@ -87,20 +94,22 @@ def health_check():
 @app.get("/options")
 def get_options():
     """Return dropdown options for the prediction form."""
-    return {
-        "brands": [
-            "alfa-romeo", "aston-martin", "audi", "bentley", "bmw",
-            "cadillac", "chevrolet", "chrysler", "citroen", "dacia",
-            "daewoo", "daihatsu", "dodge", "ferrari", "fiat", "ford",
-            "honda", "hyundai", "infiniti", "isuzu", "jaguar", "jeep",
-            "kia", "lada", "lamborghini", "lancia", "land-rover",
-            "maserati", "mazda",
-        ],
-        "colors": [
-            "beige", "black", "blue", "bronze", "brown", "gold",
-            "green", "grey", "orange", "red", "silver", "violet",
-            "white", "yellow",
-        ],
-        "fuel_types": ["Diesel", "Electric", "Hybrid", "Petrol"],
-        "transmission_types": ["Automatic", "Manual", "Semi-automatic", "Unknown"],
-    }
+    return options_data
+
+# ----- Serve Frontend Files -----
+FRONTEND_DIST = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "frontend", "dist"))
+
+# Mount assets specifically so they are found
+if os.path.isdir(os.path.join(FRONTEND_DIST, "assets")):
+    app.mount("/assets", StaticFiles(directory=os.path.join(FRONTEND_DIST, "assets")), name="assets")
+
+# Catch-all route to serve index.html for React SPA, or other static files in root
+@app.get("/{catchall:path}")
+def serve_frontend(catchall: str):
+    file_path = os.path.join(FRONTEND_DIST, catchall)
+    if catchall and os.path.isfile(file_path):
+        return FileResponse(file_path)
+    index_path = os.path.join(FRONTEND_DIST, "index.html")
+    if os.path.isfile(index_path):
+        return FileResponse(index_path)
+    return {"message": "Frontend not built. Please run npm run build in the frontend directory."}
