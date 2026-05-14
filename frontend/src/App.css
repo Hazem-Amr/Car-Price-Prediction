@@ -1,0 +1,185 @@
+/* ---- App Layout ---- */
+.app-container {
+  position: relative;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2.5rem 1rem 2rem;
+  overflow: hidden;
+}
+
+/* ---- Background Orbs ---- */
+.bg-orb {
+  position: fixed;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.25;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bg-orb-1 {
+  width: 500px;
+  height: 500px;
+  background: #6366f1;
+  top: -120px;
+  left: -100px;
+}
+
+.bg-orb-2 {
+  width: 400px;
+  height: 400px;
+  background: #8b5cf6;
+  bottom: -80px;
+  right: -60px;
+}
+
+.bg-orb-3 {
+  width: 300px;
+  height: 300px;
+  background: #a78bfa;
+  top: 40%;
+  left: 60%;
+}
+
+/* ---- Header ---- */
+.app-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.header-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+  animation: float 3s ease-in-out infinite;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.header-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #818cf8, #c084fc, #f0abfc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.header-subtitle {
+  margin-top: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+}
+
+/* ---- Main Card ---- */
+.main-card {
+  width: 100%;
+  max-width: 680px;
+  padding: 2.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* ---- Form ---- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.25rem;
+  margin-bottom: 2rem;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+/* ---- Button Loading State ---- */
+.btn-loading {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+/* ---- Price Display ---- */
+.price-display {
+  margin-top: 1.5rem;
+}
+
+.price-label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.25rem;
+}
+
+.price-note {
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-top: 0.3rem;
+}
+
+/* ---- Error ---- */
+.error-message {
+  margin-top: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.error-icon {
+  flex-shrink: 0;
+}
+
+/* ---- Footer ---- */
+.app-footer {
+  margin-top: 2rem;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
+.app-footer p {
+  font-size: 0.8rem;
+  color: #475569;
+  letter-spacing: 0.04em;
+}
+
+/* ---- Responsive ---- */
+@media (max-width: 600px) {
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .header-title {
+    font-size: 1.8rem;
+  }
+
+  .main-card {
+    padding: 1.5rem;
+  }
+
+  .price-value {
+    font-size: 2rem;
+  }
+}
