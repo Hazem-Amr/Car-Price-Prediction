@@ -161,7 +161,7 @@ export const cars = [
   {
     id: 11,
     name: "Tesla Model S",
-    price: "6,500,000 EGP",
+    price: "3,900,000 EGP",
     image:
       "https://img.autobytel.com/chrome/colormatched_01/white/1280/cc_2024tsc02_01_1280/cc_2024tsc021982876_01_1280_pn01.jpg",
     year: 2024,
@@ -177,15 +177,14 @@ export const cars = [
   {
     id: 12,
     name: "Volkswagen Golf GTI",
-    price: "2,300,000 EGP",
-    image:
-      "https://di-uploads-pod40.dealerinspire.com/southernteamvolkswagen/uploads/2022/05/ogi1-2022-vw-golf-gti-long-term-001.jpg",
+    price: "1,450,000 EGP",
+    image: "https://images.unsplash.com/photo-1544636331-e26879cd4d9b",
     year: 2022,
     km: "25,000",
     transmission: "Automatic",
     bodyType: "Hatchback",
     fuelType: "Petrol",
-    color: "Grey",
+    color: "Red",
     condition: "Good",
     phone: "+201011199988",
   },

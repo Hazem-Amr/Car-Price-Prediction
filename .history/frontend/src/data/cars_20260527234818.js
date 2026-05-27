@@ -177,7 +177,7 @@ export const cars = [
   {
     id: 12,
     name: "Volkswagen Golf GTI",
-    price: "2,300,000 EGP",
+    price: "1,450,000 EGP",
     image:
       "https://di-uploads-pod40.dealerinspire.com/southernteamvolkswagen/uploads/2022/05/ogi1-2022-vw-golf-gti-long-term-001.jpg",
     year: 2022,
