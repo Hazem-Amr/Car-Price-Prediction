@@ -1,11 +1,5 @@
 import React, { useState, useEffect } from "react";
-import {
-  Sparkles,
-  CarFront,
-  ShieldCheck,
-  Lock,
-  CheckCircle2,
-} from "lucide-react";
+import { Sparkles, CarFront, ShieldCheck, Lock, CheckCircle2 } from "lucide-react";
 
 export default function PricePredictorSection() {
   const [formData, setFormData] = useState({
@@ -17,7 +11,7 @@ export default function PricePredictorSection() {
     power_ps: "",
     fuel_type: "",
     transmission_type: "",
-    fuel_consumption: "",
+    fuel_consumption: ""
   });
 
   const [options, setOptions] = useState({
@@ -25,7 +19,7 @@ export default function PricePredictorSection() {
     brand_models: {},
     colors: [],
     fuel_types: [],
-    transmission_types: [],
+    transmission_types: []
   });
 
   const [loading, setLoading] = useState(false);
@@ -64,24 +58,20 @@ export default function PricePredictorSection() {
         fuel_type: formData.fuel_type,
         transmission_type: formData.transmission_type,
         fuel_consumption: parseFloat(formData.fuel_consumption),
-        mileage: parseFloat(formData.mileage.replace(/,/g, "")),
+        mileage: parseFloat(formData.mileage.replace(/,/g, ""))
       };
 
       // Basic validation
-      if (
-        Object.values(payload).some(
-          (val) => val === "" || Number.isNaN(val) || val === undefined,
-        )
-      ) {
+      if (Object.values(payload).some((val) => val === "" || Number.isNaN(val) || val === undefined)) {
         throw new Error("Please fill in all fields with valid data.");
       }
 
       const res = await fetch("http://127.0.0.1:8000/predict", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
+          "Content-Type": "application/json"
         },
-        body: JSON.stringify(payload),
+        body: JSON.stringify(payload)
       });
 
       if (!res.ok) {
@@ -161,7 +151,7 @@ export default function PricePredictorSection() {
                   <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-5">
                     <CarFront size={26} />
                   </div>
-                  <h3 className="text-4xl font-black mb-2">75K+</h3>
+                  <h3 className="text-4xl font-black mb-2">25K+</h3>
                   <p className="text-gray-300 leading-7">Cars Analyzed</p>
                 </div>
 
@@ -170,7 +160,7 @@ export default function PricePredictorSection() {
                   <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-5">
                     <ShieldCheck size={26} />
                   </div>
-                  <h3 className="text-4xl font-black mb-2">94%</h3>
+                  <h3 className="text-4xl font-black mb-2">98%</h3>
                   <p className="text-gray-300 leading-7">Prediction Accuracy</p>
                 </div>
               </div>
@@ -207,9 +197,7 @@ export default function PricePredictorSection() {
                     >
                       <option value="">Select brand</option>
                       {options.brands?.map((b) => (
-                        <option key={b} value={b}>
-                          {b}
-                        </option>
+                        <option key={b} value={b}>{b}</option>
                       ))}
                     </select>
                   </div>
@@ -226,12 +214,9 @@ export default function PricePredictorSection() {
                       className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition disabled:opacity-50"
                     >
                       <option value="">Select model</option>
-                      {formData.brand &&
-                        options.brand_models?.[formData.brand]?.map((m) => (
-                          <option key={m} value={m}>
-                            {m}
-                          </option>
-                        ))}
+                      {formData.brand && options.brand_models?.[formData.brand]?.map((m) => (
+                        <option key={m} value={m}>{m}</option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -250,9 +235,7 @@ export default function PricePredictorSection() {
                     >
                       <option value="">Select color</option>
                       {options.colors?.map((c) => (
-                        <option key={c} value={c}>
-                          {c}
-                        </option>
+                        <option key={c} value={c}>{c}</option>
                       ))}
                     </select>
                   </div>
@@ -322,9 +305,7 @@ export default function PricePredictorSection() {
                     >
                       <option value="">Select fuel type</option>
                       {options.fuel_types?.map((f) => (
-                        <option key={f} value={f}>
-                          {f}
-                        </option>
+                        <option key={f} value={f}>{f}</option>
                       ))}
                     </select>
                   </div>
@@ -341,9 +322,7 @@ export default function PricePredictorSection() {
                     >
                       <option value="">Select transmission</option>
                       {options.transmission_types?.map((t) => (
-                        <option key={t} value={t}>
-                          {t}
-                        </option>
+                        <option key={t} value={t}>{t}</option>
                       ))}
                     </select>
                   </div>
@@ -381,14 +360,10 @@ export default function PricePredictorSection() {
               </button>
 
               {/* Result Preview */}
-              <div
-                className={`mt-8 border ${predictedPrice ? "border-green-200 bg-green-50" : "border-gray-200 bg-gray-50"} rounded-[28px] p-6 transition-colors`}
-              >
+              <div className={`mt-8 border ${predictedPrice ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'} rounded-[28px] p-6 transition-colors`}>
                 <div className="flex items-center gap-5">
                   {/* Lock */}
-                  <div
-                    className={`w-20 h-20 rounded-full bg-white border ${predictedPrice ? "border-green-200" : "border-gray-200"} flex items-center justify-center`}
-                  >
+                  <div className={`w-20 h-20 rounded-full bg-white border ${predictedPrice ? 'border-green-200' : 'border-gray-200'} flex items-center justify-center`}>
                     {predictedPrice ? (
                       <CheckCircle2 size={30} className="text-green-500" />
                     ) : (
@@ -429,3 +404,4 @@ export default function PricePredictorSection() {
     </section>
   );
 }
+

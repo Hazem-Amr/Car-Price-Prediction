@@ -170,7 +170,7 @@ export default function PricePredictorSection() {
                   <div className="w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center mb-5">
                     <ShieldCheck size={26} />
                   </div>
-                  <h3 className="text-4xl font-black mb-2">94%</h3>
+                  <h3 className="text-4xl font-black mb-2">97%</h3>
                   <p className="text-gray-300 leading-7">Prediction Accuracy</p>
                 </div>
               </div>
