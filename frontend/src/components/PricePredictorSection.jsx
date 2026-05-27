@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Sparkles,
   CarFront,
@@ -8,6 +9,8 @@ import {
 } from "lucide-react";
 
 export default function PricePredictorSection() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     brand: "",
     model: "",
@@ -422,6 +425,31 @@ export default function PricePredictorSection() {
                   </div>
                 </div>
               </div>
+
+              {/* Sell Your Car Button — appears after prediction */}
+              {predictedPrice && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigate("/sell-car", {
+                      state: {
+                        brand: formData.brand,
+                        model: formData.model,
+                        color: formData.color,
+                        registration_year: formData.registration_year,
+                        mileage: formData.mileage,
+                        power_ps: formData.power_ps,
+                        fuel_type: formData.fuel_type,
+                        transmission_type: formData.transmission_type,
+                        fuel_consumption: formData.fuel_consumption,
+                      },
+                    })
+                  }
+                  className="w-full h-16 mt-4 rounded-2xl bg-green-600 hover:bg-green-700 transition text-white text-xl font-semibold shadow-xl flex items-center justify-center gap-3"
+                >
+                  Sell Your Car with These Details
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -1,15 +1,10 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Upload, Sparkles, CheckCircle2 } from "lucide-react";
 
-import { userListings } from "../../data/userListings";
-import { predictVehiclePrice } from "../../services/predictorApi";
+import { predictVehiclePrice, submitCarListing } from "../../services/predictorApi";
 
 const conditions = ["Excellent", "Good", "Fair"];
-
-const fuelTypes = ["Petrol", "Diesel", "Hybrid", "Electric"];
-
-const transmissions = ["Automatic", "Manual"];
 
 const bodyTypes = [
   "Sedan",
@@ -22,24 +17,36 @@ const bodyTypes = [
 
 export default function SellCarForm() {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [loading, setLoading] = useState(false);
-
   const [predictionLoading, setPredictionLoading] = useState(false);
-
   const [prediction, setPrediction] = useState(null);
-
   const [success, setSuccess] = useState(false);
 
+  // Backend dropdown options (same as AI pricing page)
+  const [options, setOptions] = useState({
+    brands: [],
+    brand_models: {},
+    colors: [],
+    fuel_types: [],
+    transmission_types: [],
+  });
+
+  // Pre-fill from AI pricing page if navigated with state
+  const prefill = location.state || {};
+
   const [formData, setFormData] = useState({
-    make: "",
-    model: "",
-    year: "",
-    mileage: "",
+    make: prefill.brand || "",
+    model: prefill.model || "",
+    year: prefill.registration_year || "",
+    mileage: prefill.mileage || "",
     condition: "",
-    color: "",
-    fuelType: "",
-    transmission: "",
+    color: prefill.color || "",
+    fuelType: prefill.fuel_type || "",
+    transmission: prefill.transmission_type || "",
+    powerPs: prefill.power_ps || "",
+    fuelConsumption: prefill.fuel_consumption || "",
     bodyType: "",
     description: "",
     price: "",
@@ -49,25 +56,29 @@ export default function SellCarForm() {
 
   const [previewImages, setPreviewImages] = useState([]);
 
-  // Handle Inputs
+  // Fetch dropdown options from backend
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/options")
+      .then((res) => res.json())
+      .then((data) => setOptions(data))
+      .catch((err) => console.error("Failed to load options:", err));
+  }, []);
+
+  // Handle Inputs — reset model when brand changes
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value } = e.target;
+    if (name === "make") {
+      setFormData({ ...formData, make: value, model: "" });
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   // Upload Images
   const handleImageUpload = (e) => {
     const files = Array.from(e.target.files);
-
-    setFormData({
-      ...formData,
-      images: files,
-    });
-
+    setFormData({ ...formData, images: files });
     const previews = files.map((file) => URL.createObjectURL(file));
-
     setPreviewImages(previews);
   };
 
@@ -94,18 +105,16 @@ export default function SellCarForm() {
   const handlePredictPrice = async () => {
     if (!validateForm()) {
       alert("Please complete all required fields first.");
-
       return;
     }
 
     try {
       setPredictionLoading(true);
-
       const result = await predictVehiclePrice(formData);
-
       setPrediction(result);
     } catch (error) {
-      console.log(error);
+      console.error(error);
+      alert("Prediction failed: " + error.message);
     } finally {
       setPredictionLoading(false);
     }
@@ -117,44 +126,17 @@ export default function SellCarForm() {
 
     if (!validateForm()) {
       alert("Please complete all required fields.");
-
       return;
     }
 
     try {
       setLoading(true);
 
-      const newCar = {
-        id: Date.now(),
+      // Send the first uploaded image file to the backend
+      const imageFile = formData.images.length > 0 ? formData.images[0] : null;
+      const predictedPrice = prediction ? prediction.rawPrice : null;
 
-        name: `${formData.make} ${formData.model}`,
-
-        price: `${formData.price} EGP`,
-
-        image: previewImages[0],
-
-        year: formData.year,
-
-        km: formData.mileage,
-
-        transmission: formData.transmission,
-
-        bodyType: formData.bodyType,
-
-        condition: formData.condition,
-
-        color: formData.color,
-
-        fuelType: formData.fuelType,
-
-        description: formData.description,
-
-        phone: formData.phone,
-
-        gallery: previewImages,
-      };
-
-      userListings.unshift(newCar);
+      await submitCarListing(formData, imageFile, predictedPrice);
 
       setSuccess(true);
 
@@ -162,7 +144,8 @@ export default function SellCarForm() {
         navigate("/cars");
       }, 2000);
     } catch (error) {
-      console.log(error);
+      console.error("Failed to submit listing:", error);
+      alert("Failed to publish listing. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -181,50 +164,59 @@ export default function SellCarForm() {
               </h2>
 
               <div className="grid md:grid-cols-2 gap-6">
-                {/* Make */}
+                {/* Brand (Dropdown from backend) */}
                 <div>
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
-                    Car Make
+                    Brand
                   </label>
-
-                  <input
-                    type="text"
+                  <select
                     name="make"
                     value={formData.make}
                     onChange={handleChange}
-                    placeholder="e.g. BMW"
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
-                  />
+                  >
+                    <option value="">Select brand</option>
+                    {options.brands?.map((b) => (
+                      <option key={b} value={b}>
+                        {b}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Model */}
+                {/* Model (Filtered by selected brand) */}
                 <div>
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Model
                   </label>
-
-                  <input
-                    type="text"
+                  <select
                     name="model"
                     value={formData.model}
                     onChange={handleChange}
-                    placeholder="e.g. X5"
-                    className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
-                  />
+                    disabled={!formData.make}
+                    className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition disabled:opacity-50"
+                  >
+                    <option value="">Select model</option>
+                    {formData.make &&
+                      options.brand_models?.[formData.make]?.map((m) => (
+                        <option key={m} value={m}>
+                          {m}
+                        </option>
+                      ))}
+                  </select>
                 </div>
 
                 {/* Year */}
                 <div>
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
-                    Year
+                    Registration Year
                   </label>
-
                   <input
                     type="number"
                     name="year"
                     value={formData.year}
                     onChange={handleChange}
-                    placeholder="2023"
+                    placeholder="e.g. 2021"
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
                   />
                 </div>
@@ -234,13 +226,12 @@ export default function SellCarForm() {
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Mileage (KM)
                   </label>
-
                   <input
                     type="number"
                     name="mileage"
                     value={formData.mileage}
                     onChange={handleChange}
-                    placeholder="50000"
+                    placeholder="e.g. 50000"
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
                   />
                 </div>
@@ -259,7 +250,6 @@ export default function SellCarForm() {
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Condition
                   </label>
-
                   <select
                     name="condition"
                     value={formData.condition}
@@ -267,7 +257,6 @@ export default function SellCarForm() {
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
                   >
                     <option value="">Select condition</option>
-
                     {conditions.map((condition) => (
                       <option key={condition} value={condition}>
                         {condition}
@@ -276,28 +265,31 @@ export default function SellCarForm() {
                   </select>
                 </div>
 
-                {/* Color */}
+                {/* Color (Dropdown from backend) */}
                 <div>
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Color
                   </label>
-
-                  <input
-                    type="text"
+                  <select
                     name="color"
                     value={formData.color}
                     onChange={handleChange}
-                    placeholder="Black"
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
-                  />
+                  >
+                    <option value="">Select color</option>
+                    {options.colors?.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
-                {/* Fuel */}
+                {/* Fuel Type (Dropdown from backend) */}
                 <div>
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Fuel Type
                   </label>
-
                   <select
                     name="fuelType"
                     value={formData.fuelType}
@@ -305,21 +297,19 @@ export default function SellCarForm() {
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
                   >
                     <option value="">Select fuel type</option>
-
-                    {fuelTypes.map((fuel) => (
-                      <option key={fuel} value={fuel}>
-                        {fuel}
+                    {options.fuel_types?.map((f) => (
+                      <option key={f} value={f}>
+                        {f}
                       </option>
                     ))}
                   </select>
                 </div>
 
-                {/* Transmission */}
+                {/* Transmission (Dropdown from backend) */}
                 <div>
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Transmission
                   </label>
-
                   <select
                     name="transmission"
                     value={formData.transmission}
@@ -327,10 +317,9 @@ export default function SellCarForm() {
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
                   >
                     <option value="">Select transmission</option>
-
-                    {transmissions.map((transmission) => (
-                      <option key={transmission} value={transmission}>
-                        {transmission}
+                    {options.transmission_types?.map((t) => (
+                      <option key={t} value={t}>
+                        {t}
                       </option>
                     ))}
                   </select>
@@ -341,7 +330,6 @@ export default function SellCarForm() {
                   <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
                     Body Type
                   </label>
-
                   <select
                     name="bodyType"
                     value={formData.bodyType}
@@ -349,7 +337,6 @@ export default function SellCarForm() {
                     className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
                   >
                     <option value="">Select body type</option>
-
                     {bodyTypes.map((type) => (
                       <option key={type} value={type}>
                         {type}
@@ -357,7 +344,38 @@ export default function SellCarForm() {
                     ))}
                   </select>
                 </div>
+
+                {/* Power (HP) */}
+                <div>
+                  <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+                    Power (HP)
+                  </label>
+                  <input
+                    type="number"
+                    name="powerPs"
+                    value={formData.powerPs}
+                    onChange={handleChange}
+                    placeholder="e.g. 180"
+                    className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
+                  />
+                </div>
               </div>
+            </div>
+
+            {/* Fuel Consumption */}
+            <div>
+              <label className="block text-sm font-semibold uppercase tracking-wide text-gray-500 mb-3">
+                Fuel Consumption (L/100KM)
+              </label>
+              <input
+                type="number"
+                step="0.1"
+                name="fuelConsumption"
+                value={formData.fuelConsumption}
+                onChange={handleChange}
+                placeholder="e.g. 6.5"
+                className="w-full h-16 rounded-2xl border border-gray-200 bg-gray-50 px-5 text-lg outline-none focus:border-gray-900 transition"
+              />
             </div>
           </div>
 
