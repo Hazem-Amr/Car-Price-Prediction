@@ -20,7 +20,8 @@ from typing import Optional
 from utils import predict_price, CATEGORICAL_FEATURES
 from database import engine, get_db
 import models
-from schemas import PredictionRequest, PredictionResponse, CarResponse
+import auth
+from schemas import PredictionRequest, PredictionResponse, CarResponse, UserCreate, UserLogin, UserResponse, Token
 
 # ----- App setup -----
 app = FastAPI(title="Car Price Prediction API", version="1.0.0")
@@ -94,6 +95,52 @@ def health_check():
 def get_options():
     """Return dropdown options for the prediction form."""
     return options_data
+
+
+# ----- Auth Endpoints -----
+@app.post("/signup", response_model=UserResponse)
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if db_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+    
+    hashed_password = auth.get_password_hash(user.password)
+    new_user = models.User(
+        full_name=user.full_name,
+        email=user.email,
+        hashed_password=hashed_password
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user
+
+@app.post("/login", response_model=Token)
+def login(user: UserLogin, db: Session = Depends(get_db)):
+    db_user = db.query(models.User).filter(models.User.email == user.email).first()
+    if not db_user or not auth.verify_password(user.password, db_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Incorrect email or password")
+    
+    access_token = auth.create_access_token(data={"sub": db_user.email})
+    return {"access_token": access_token, "token_type": "bearer"}
+
+from fastapi import Header
+@app.get("/users/me", response_model=UserResponse)
+def get_current_user(authorization: str = Header(None), db: Session = Depends(get_db)):
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+    
+    token = authorization.split(" ")[1]
+    payload = auth.decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+        
+    email = payload.get("sub")
+    db_user = db.query(models.User).filter(models.User.email == email).first()
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found")
+        
+    return db_user
 
 
 # ----- Car Listing Endpoints -----
@@ -178,8 +225,61 @@ def sell_car(
 
 @app.get("/cars", response_model=list[CarResponse])
 def list_cars(db: Session = Depends(get_db)):
-    """Return all car listings from the database."""
-    return db.query(models.CarForSale).all()
+    """Return all active (non-deleted) car listings from the database."""
+    return db.query(models.CarForSale).filter(models.CarForSale.is_deleted == False).all()
+
+
+@app.delete("/cars/{car_id}")
+def delete_car(car_id: int, authorization: str = Header(None), db: Session = Depends(get_db)):
+    """Soft-delete a car listing. Admin only."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+    token = authorization.split(" ")[1]
+    payload = auth.decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    email = payload.get("sub")
+    if email != "admin@tara.com":
+        raise HTTPException(status_code=403, detail="Forbidden. Admin access required.")
+    db_car = db.query(models.CarForSale).filter(models.CarForSale.id == car_id).first()
+    if not db_car:
+        raise HTTPException(status_code=404, detail="Car not found")
+    db_car.is_deleted = True
+    db.commit()
+    return {"message": "Car moved to trash successfully"}
+
+
+@app.get("/admin/cars/deleted", response_model=list[CarResponse])
+def list_deleted_cars(authorization: str = Header(None), db: Session = Depends(get_db)):
+    """Return all soft-deleted cars. Admin only."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+    token = authorization.split(" ")[1]
+    payload = auth.decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    if payload.get("sub") != "admin@tara.com":
+        raise HTTPException(status_code=403, detail="Forbidden. Admin access required.")
+    return db.query(models.CarForSale).filter(models.CarForSale.is_deleted == True).all()
+
+
+@app.post("/admin/cars/{car_id}/restore")
+def restore_car(car_id: int, authorization: str = Header(None), db: Session = Depends(get_db)):
+    """Restore a soft-deleted car. Admin only."""
+    if not authorization or not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+    token = authorization.split(" ")[1]
+    payload = auth.decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid token")
+    if payload.get("sub") != "admin@tara.com":
+        raise HTTPException(status_code=403, detail="Forbidden. Admin access required.")
+    db_car = db.query(models.CarForSale).filter(models.CarForSale.id == car_id).first()
+    if not db_car:
+        raise HTTPException(status_code=404, detail="Car not found")
+    db_car.is_deleted = False
+    db.commit()
+    return {"message": "Car restored successfully"}
 
 
 # ----- Serve uploaded images -----

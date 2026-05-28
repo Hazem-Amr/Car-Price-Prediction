@@ -3,9 +3,19 @@ SQLAlchemy ORM model for the cars_for_sale table.
 Defines the database schema for car listings.
 """
 
-from sqlalchemy import Column, Integer, String, Float, Text, DateTime
+from sqlalchemy import Column, Integer, String, Float, Text, DateTime, Boolean
 from sqlalchemy.sql import func
 from database import Base
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String, nullable=False)
+    email = Column(String, unique=True, index=True, nullable=False)
+    hashed_password = Column(String, nullable=False)
+    created_at = Column(DateTime, server_default=func.now())
 
 
 class CarForSale(Base):
@@ -29,3 +39,4 @@ class CarForSale(Base):
     asking_price = Column(Integer, nullable=False)      # What the user wants
     predicted_price = Column(Integer, nullable=True)     # What the AI predicts
     created_at = Column(DateTime, server_default=func.now())  # When the listing was created
+    is_deleted = Column(Boolean, default=False, nullable=False)  # Soft delete flag

@@ -1,13 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useLocation } from "react-router-dom";
 
 import { userListings } from "../data/userListings";
 
 import CarCard from "../components/CarCard";
 import CarsFilter from "../components/CarsFilter";
+import { AuthContext } from "../context/AuthContext";
 
 export default function Cars() {
   const location = useLocation();
+  const { user } = useContext(AuthContext);
+  const isAdmin = user?.email === "admin@tara.com";
 
   const params = new URLSearchParams(location.search);
 
@@ -21,12 +24,13 @@ export default function Cars() {
 
   const [dbCars, setDbCars] = useState([]);
 
-  useEffect(() => {
+  const fetchCars = () => {
     fetch("http://127.0.0.1:8000/cars")
       .then((res) => res.json())
       .then((data) => {
         const formattedCars = data.map((car) => ({
           id: `db-${car.id}`,
+          rawId: car.id,
           image: car.image_path ? (car.image_path.startsWith('http') ? car.image_path : `http://127.0.0.1:8000${car.image_path}`) : "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80",
           name: `${car.brand} ${car.model_name}`,
           price: `${Number(car.asking_price).toLocaleString()} EGP`,
@@ -40,7 +44,30 @@ export default function Cars() {
         setDbCars(formattedCars);
       })
       .catch((err) => console.error("Failed to fetch cars from database:", err));
-  }, []);
+  };
+
+  useEffect(() => { fetchCars(); }, []);
+
+  const handleDelete = async (carId) => {
+    // carId is like "db-5", extract the numeric part
+    const rawId = carId.replace("db-", "");
+    const token = localStorage.getItem("token");
+    if (!window.confirm("Are you sure you want to delete this car?")) return;
+    try {
+      const res = await fetch(`http://127.0.0.1:8000/cars/${rawId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        fetchCars(); // Refresh list
+      } else {
+        const err = await res.json();
+        alert(`Error: ${err.detail}`);
+      }
+    } catch (e) {
+      alert("Failed to delete car.");
+    }
+  };
 
   // Merge Marketplace + User Listings + Database Cars
   const mergedCars = [...dbCars, ...userListings];
@@ -148,7 +175,7 @@ export default function Cars() {
             {filteredCars.length > 0 ? (
               <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
                 {filteredCars.map((car) => (
-                  <CarCard key={car.id} car={car} />
+                  <CarCard key={car.id} car={car} isAdmin={isAdmin} onDelete={handleDelete} />
                 ))}
               </div>
             ) : (

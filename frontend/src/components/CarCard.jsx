@@ -3,7 +3,7 @@ import { Calendar, Gauge, Heart, MapPin, Fuel, Phone } from "lucide-react";
 
 import { Link } from "react-router-dom";
 
-export default function CarCard({ car }) {
+export default function CarCard({ car, isAdmin, onDelete }) {
   return (
     <div className="group bg-white rounded-3xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
       {/* Image */}
@@ -85,6 +85,16 @@ export default function CarCard({ car }) {
 
         {/* CTA */}
         <div className="flex items-center gap-3 mt-5">
+          {isAdmin && (
+            <button
+              onClick={() => onDelete(car.id)}
+              className="w-12 h-12 rounded-xl bg-red-100 hover:bg-red-200 transition-all duration-300 flex items-center justify-center text-red-600 shadow-sm flex-shrink-0"
+              title="Delete Car"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          )}
+
           {/* View Details */}
           <Link to={`/cars/${car.id}`} className="flex-1">
             <button className="w-full bg-gray-100 hover:bg-gray-900 hover:text-white transition-all duration-300 rounded-xl py-3 font-semibold text-sm">

@@ -24,6 +24,30 @@ class PredictionResponse(BaseModel):
     predicted_price: int
 
 
+# ----- Auth Schemas -----
+
+class UserCreate(BaseModel):
+    full_name: str = Field(..., example="John Doe")
+    email: str = Field(..., example="john@example.com")
+    password: str = Field(..., example="secret123")
+
+class UserLogin(BaseModel):
+    email: str = Field(..., example="john@example.com")
+    password: str = Field(..., example="secret123")
+
+class UserResponse(BaseModel):
+    id: int
+    full_name: str
+    email: str
+
+    class Config:
+        from_attributes = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+
 # ----- Car Listing Schemas -----
 
 class CarResponse(BaseModel):
