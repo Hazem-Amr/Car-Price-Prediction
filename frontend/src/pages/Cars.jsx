@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
 import { cars } from "../data/cars";
@@ -20,8 +20,31 @@ export default function Cars() {
   const fuel = params.get("fuel") || "";
   const transmission = params.get("transmission") || "";
 
-  // Merge Marketplace + User Listings
-  const mergedCars = [...userListings, ...cars];
+  const [dbCars, setDbCars] = useState([]);
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/cars")
+      .then((res) => res.json())
+      .then((data) => {
+        const formattedCars = data.map((car) => ({
+          id: `db-${car.id}`,
+          image: car.image_path ? `http://127.0.0.1:8000${car.image_path}` : "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80",
+          name: `${car.brand} ${car.model_name}`,
+          price: `${Number(car.asking_price).toLocaleString()} EGP`,
+          bodyType: car.body_type || "Unknown",
+          year: car.registration_year,
+          km: Number(car.mileage).toLocaleString(),
+          fuelType: car.fuel_type,
+          transmission: car.transmission_type,
+          phone: car.phone || "N/A"
+        }));
+        setDbCars(formattedCars);
+      })
+      .catch((err) => console.error("Failed to fetch cars from database:", err));
+  }, []);
+
+  // Merge Marketplace + User Listings + Database Cars
+  const mergedCars = [...dbCars, ...userListings, ...cars];
 
   // Filter Cars
   const filteredCars = mergedCars.filter((car) => {
