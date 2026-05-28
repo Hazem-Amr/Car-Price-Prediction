@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 
-import { cars } from "../data/cars";
 import { userListings } from "../data/userListings";
 
 import CarCard from "../components/CarCard";
@@ -28,7 +27,7 @@ export default function Cars() {
       .then((data) => {
         const formattedCars = data.map((car) => ({
           id: `db-${car.id}`,
-          image: car.image_path ? `http://127.0.0.1:8000${car.image_path}` : "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80",
+          image: car.image_path ? (car.image_path.startsWith('http') ? car.image_path : `http://127.0.0.1:8000${car.image_path}`) : "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80",
           name: `${car.brand} ${car.model_name}`,
           price: `${Number(car.asking_price).toLocaleString()} EGP`,
           bodyType: car.body_type || "Unknown",
@@ -44,7 +43,7 @@ export default function Cars() {
   }, []);
 
   // Merge Marketplace + User Listings + Database Cars
-  const mergedCars = [...dbCars, ...userListings, ...cars];
+  const mergedCars = [...dbCars, ...userListings];
 
   // Filter Cars
   const filteredCars = mergedCars.filter((car) => {

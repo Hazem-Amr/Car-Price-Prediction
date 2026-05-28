@@ -1,16 +1,47 @@
 import { useParams } from "react-router-dom";
+import { useState, useEffect } from "react";
 
-import { cars } from "../data/cars";
 import { userListings } from "../data/userListings";
 
 export default function CarDetails() {
   const { id } = useParams();
+  const [car, setCar] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  // Merge Marketplace Cars + User Listings
-  const allCars = [...userListings, ...cars];
+  useEffect(() => {
+    fetch("http://127.0.0.1:8000/cars")
+      .then((res) => res.json())
+      .then((data) => {
+        const dbCars = data.map((car) => ({
+          id: `db-${car.id}`,
+          image: car.image_path ? (car.image_path.startsWith('http') ? car.image_path : `http://127.0.0.1:8000${car.image_path}`) : "https://images.unsplash.com/photo-1533473359331-0135ef1b58bf?auto=format&fit=crop&q=80",
+          name: `${car.brand} ${car.model_name}`,
+          price: `${Number(car.asking_price).toLocaleString()} EGP`,
+          bodyType: car.body_type || "Unknown",
+          year: car.registration_year,
+          km: Number(car.mileage).toLocaleString(),
+          fuelType: car.fuel_type,
+          transmission: car.transmission_type,
+          phone: car.phone || "N/A",
+          color: car.color,
+          condition: car.condition,
+          description: car.description
+        }));
+        
+        const allCars = [...dbCars, ...userListings];
+        const foundCar = allCars.find((c) => c.id.toString() === id);
+        setCar(foundCar);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("Failed to fetch cars:", err);
+        setLoading(false);
+      });
+  }, [id]);
 
-  // Find Current Car
-  const car = allCars.find((c) => c.id.toString() === id);
+  if (loading) {
+    return <div className="pt-40 text-center text-3xl font-semibold">Loading car details...</div>;
+  }
 
   // Not Found
   if (!car) {
