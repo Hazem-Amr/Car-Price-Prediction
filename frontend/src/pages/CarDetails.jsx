@@ -25,7 +25,9 @@ export default function CarDetails() {
           phone: car.phone || "N/A",
           color: car.color,
           condition: car.condition,
-          description: car.description
+          description: car.description,
+          powerPs: car.power_ps,
+          fuelConsumption: car.fuel_consumption,
         }));
         
         const allCars = [...dbCars, ...userListings];
@@ -149,6 +151,20 @@ export default function CarDetails() {
                   {car.condition || "Excellent"}
                 </h3>
               </div>
+
+              {car.powerPs && (
+                <div className="bg-gray-50 rounded-2xl p-5">
+                  <p className="text-sm text-gray-500 mb-2">Power</p>
+                  <h3 className="text-xl font-bold text-gray-900">{car.powerPs} HP</h3>
+                </div>
+              )}
+
+              {car.fuelConsumption && (
+                <div className="bg-gray-50 rounded-2xl p-5">
+                  <p className="text-sm text-gray-500 mb-2">Fuel Consumption</p>
+                  <h3 className="text-xl font-bold text-gray-900">{car.fuelConsumption} L/100km</h3>
+                </div>
+              )}
             </div>
 
             {/* Call Seller */}
@@ -191,6 +207,13 @@ export default function CarDetails() {
                 <div className="bg-gray-100 p-5 font-semibold">Color</div>
 
                 <div className="p-5">{car.color || "Black"}</div>
+
+                {car.powerPs && (
+                  <>
+                    <div className="bg-gray-100 p-5 font-semibold">Power</div>
+                    <div className="p-5">{car.powerPs} HP</div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -218,6 +241,13 @@ export default function CarDetails() {
                 <div className="bg-gray-100 p-5 font-semibold">Mileage</div>
 
                 <div className="p-5">{car.km}</div>
+
+                {car.fuelConsumption && (
+                  <>
+                    <div className="bg-gray-100 p-5 font-semibold">Fuel Consumption</div>
+                    <div className="p-5">{car.fuelConsumption} L/100km</div>
+                  </>
+                )}
               </div>
             </div>
           </div>
