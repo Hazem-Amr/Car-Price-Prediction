@@ -7,3 +7,6 @@ pandas
 scikit-learn
 sqlalchemy
 python-multipart
+bcrypt
+PyJWT
+pydantic
